@@ -30,10 +30,10 @@ class Client(object):
         self._version = version
 
     @staticmethod
-    def _get(url, params=None):
+    def _get(url, headers=None, params=None):
         """HTTP GET request."""
         try:
-            response = requests.get(url, params=params)
+            response = requests.get(url, headers=headers, params=params)
             response.raise_for_status()
             # If JSON fails, return raw data
             # (e.g. when downloading CSV job logs).
@@ -46,19 +46,15 @@ class Client(object):
             return json.loads(urllib2.urlopen(url).read().decode(ENCODING))
 
     @staticmethod
-    def _post(url, data, content_type, params=None):
+    def _post(url, data, headers=None, params=None):
         """HTTP POST request."""
         try:
-            response = requests.post(url, params=params, data=data, headers={
-                'Content-Type': content_type,
-            })
+            response = requests.post(url, params=params, data=data, headers=headers)
             response.raise_for_status()
             return response.json()
         except NameError:
             url = '{0}?{1}'.format(url, urllib.urlencode(params))
-            req = urllib2.Request(url, data.encode(ENCODING), {
-                'Content-Type': content_type,
-            })
+            req = urllib2.Request(url, data.encode(ENCODING), headers)
             return json.loads(urllib2.urlopen(req).read().decode(ENCODING))
 
     def endpoint(self, name):
@@ -74,6 +70,7 @@ class Client(object):
         timeout = kwargs.get('timeout')
         text = kwargs.get('text')
         html = kwargs.get('html')
+        headers = kwargs.get('headers')
         if text and html:
             raise ValueError(u'Both `text` and `html` arguments provided!')
         params = {'url': url, 'token': self._token}
@@ -86,8 +83,12 @@ class Client(object):
         url = self.endpoint(name)
         if text or html:
             content_type = html and 'text/html' or 'text/plain'
-            return self._post(url, text or html, content_type, params=params)
-        return self._get(url, params=params)
+            headers_cust['Content-Type'] = content_type
+            if headers:
+                headers_cust = headers.copy()
+                headers_cust['Content-Type'] = content_type
+            return self._post(url, text or html, headers=headers_cust, params=params)
+        return self._get(url, headers=headers, params=params)
 
     def article(self, url, **kwargs):
         """Article API."""
