@@ -1,4 +1,4 @@
-"""Diffbot API wrapper."""
+"""Diffbot API wrapper. Edited Lee H"""
 import argparse
 import json
 import os
