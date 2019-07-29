@@ -159,7 +159,7 @@ class Job(Client):
     def control(self, **kwargs):
         params = {'token': self._token, 'name': self._name}
         params.update(kwargs)
-        res = self._get(self._url, params)
+        res = self._get(self._url, params=params)
         job = next(j for j in res['jobs'] if j['name'] == self._name)
         return job
 
