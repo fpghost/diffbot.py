@@ -33,7 +33,10 @@ class Client(object):
     def _get(url, headers=None, params=None):
         """HTTP GET request."""
         try:
-            response = requests.get(url, headers=headers, params=params)
+            if headers:
+                response = requests.get(url, headers=headers, params=params)
+            else:
+                response = response.get(url, params=params)
             response.raise_for_status()
             # If JSON fails, return raw data
             # (e.g. when downloading CSV job logs).
