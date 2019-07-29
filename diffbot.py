@@ -57,9 +57,13 @@ class Client(object):
             req = urllib2.Request(url, data.encode(ENCODING), headers)
             return json.loads(urllib2.urlopen(req).read().decode(ENCODING))
 
-    def endpoint(self, name):
+    def endpoint(self, name, no_render=False):
         """Generate the URL endpoint for the given API."""
-        return '{0}/v{1}/{2}'.format(API_ROOT, self._version, name)
+        endpoint_url = '{0}/v{1}/{2}'.format(API_ROOT, self._version, name)
+        if no_render:
+            # Turn off js to speed up processing
+            endpoint_url += '?norender'
+        return endpoint_url
 
     def api(self, name, url, **kwargs):
         """Generic API method."""
@@ -83,7 +87,7 @@ class Client(object):
         url = self.endpoint(name)
         if text or html:
             content_type = html and 'text/html' or 'text/plain'
-            headers_cust['Content-Type'] = content_type
+            headers_cust = {'Content-Type': content_type}
             if headers:
                 headers_cust = headers.copy()
                 headers_cust['Content-Type'] = content_type
@@ -123,13 +127,11 @@ class Client(object):
         if isinstance(urls, list):
             urls = ' '.join(urls)
         url = self.endpoint('crawl')
-        process_url = self.endpoint(api)
-        params = {
-            'token': self._token,
-            'seeds': urls,
-            'name': name,
-            'apiUrl': process_url,
-        }
+        process_url = self.endpoint(api, no_render=kwargs.get('no_render', False))
+        params = {'token': self._token,
+                  'seeds': urls,
+                  'name': name,
+                  'apiUrl': process_url,}
 
         # Add any additional named parameters as accepted by Crawlbot
         params['maxToCrawl'] = 10
